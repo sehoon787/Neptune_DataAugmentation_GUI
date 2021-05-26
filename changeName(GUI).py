@@ -5,6 +5,7 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtWidgets import QFileDialog
 from os import chdir, getcwd, rename, mkdir
+from PIL import Image
 
 mainDlg_class = uic.loadUiType("ui/txtGenerator.ui")[0]
 
@@ -73,7 +74,7 @@ class txtGenerator(QMainWindow, mainDlg_class):
             currentState = currentState + str(i) + ' : ' + oldName + ' => ' + newName + '\n'
 
             # path = name.replace(oldName, '')
-            rename(name, 'result/' + newName)
+            Image.open(name).convert('RGB').save('./result/' + newName)
             self.textEdit_jpgList.setText(currentState)
 
         currentState = currentState + 'Finish!'
