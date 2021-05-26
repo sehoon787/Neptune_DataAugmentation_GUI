@@ -13,7 +13,7 @@ class txtGenerator(QMainWindow, mainDlg_class):
         super(txtGenerator, self).__init__()
         self.setupUi(self)
 
-        # Make directory to save csv files
+        # Make directory to save result files
         try:
             mkdir('./result')
         except:
