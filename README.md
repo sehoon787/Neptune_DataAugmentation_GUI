@@ -11,5 +11,5 @@ Finally Press Start Button.
 If you reset current configuration, press reset button.
 
 Neptune's file name changing code is made similarly under this line.
-for i in range(images):
-  save(./result/'targetName'_'i'.jpg) 
+## for i in range(images):
+##  save(./result/'targetName'_'i'.jpg) 
