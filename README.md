@@ -11,4 +11,4 @@ Finally Press Start Button.
 If you reset current configuration, press reset button.
 
 Neptune's file name changing code is made similarly under this line.
-#save(./result/'targetName'_'i'.jpg) 
+# save(./result/'targetName'_'i'.jpg) 
