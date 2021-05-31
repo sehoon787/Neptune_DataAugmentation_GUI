@@ -13,7 +13,7 @@ def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     base_path = getattr(sys, '_MEIPASS', dirname(abspath(__file__)))
     return join(base_path, relative_path)
-form = resource_path("..\\envs\\jpgConverter.ui")
+form = resource_path("jpgConverter.ui")
 mainDlg_class = uic.loadUiType(form)[0]
 
 # mainDlg_class = uic.loadUiType("ui/jpgConverter.ui")[0]
