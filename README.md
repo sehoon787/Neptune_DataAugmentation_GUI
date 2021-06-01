@@ -1,4 +1,4 @@
-# Neptune 1.0 (Convert-png-to-jpg_GUI)
+# Neptune 2.0 (Convert-png-to-jpg_GUI)
 
 This tool convert png file to jpg file not only change name but also file format completely.
 And this will help you change jpg Data set files name to recongnize easily.
