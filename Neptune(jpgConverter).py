@@ -6,7 +6,7 @@ from os import chdir, getcwd, mkdir
 # Main Dialog
 from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QIcon
 
 # Image Control
 from cv2 import IMREAD_GRAYSCALE, IMREAD_COLOR, imdecode
@@ -37,6 +37,9 @@ class jpgConverter(QMainWindow, mainDlg_class):
             mkdir('./result')
         except:
             pass
+
+        icon = resource_path("neptune.png")
+        self.setWindowIcon(QIcon(icon))
 
         self.default_path = getcwd()
         self.rotateAngle = 0
