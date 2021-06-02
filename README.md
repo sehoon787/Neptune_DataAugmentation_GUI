@@ -39,3 +39,5 @@ Distort image with Lens Distortion effect
 # Make exe
 pyinstaller --noconsole --add-binary "jpgConverter.ui";"." --add-binary "sampleOriginal.jpg";"." --add-binary "sampleResult.jpg";"." --onefile "Neptune(jpgConverter).py"
 
+# icon, png
+icon from https://icon-icons.com/ko/, and sampleOriginal.jpg has been taken by me
