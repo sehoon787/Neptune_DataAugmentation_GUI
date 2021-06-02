@@ -11,9 +11,10 @@ Finally Press Start Button.
 
 If you reset current configuration, press reset button.
 
-# Convert grayscale image and Rotate
+# Convert grayscale image, Rotate and Salt & Pepper noise
 If you choose Gray Scale in Design Method then convert color image files to gray scale.
-And when you want to rotate images, then write dgree on Rotate textbox
+When you want to rotate images then write dgree on Rotate textbox.
+And make Salt & Pepper noise in image by checking Salt Pepper check box 
 
 # Bluring
 This tool provide 5 knids of method
