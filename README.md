@@ -25,7 +25,7 @@ This tool provide 5 knids of method
 5. Bilateral Filtering
 
 # Image Quality (file size)
-You can change image quality by using with opencv method
+You can change image quality by using opencv method
 
 # Nonlinear Mapping
 Insert Nonlinear Mapping Effect
