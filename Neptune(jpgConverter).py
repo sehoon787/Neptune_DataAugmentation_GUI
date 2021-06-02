@@ -16,6 +16,7 @@ from cv2 import remap, INTER_CUBIC, BORDER_DEFAULT
 from cv2 import cartToPolar, polarToCart, INTER_LINEAR
 from cv2 import IMWRITE_JPEG_QUALITY, imwrite
 
+from random import randint
 from numpy import fromfile, uint8, float32, abs
 from numpy import ones, sin, indices
 
@@ -195,6 +196,14 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 # 이미지 Rotate
                 if self.rotateAngle != 0:
                     img = self.RotateImage(img, self.rotateAngle)
+                else:
+                    self.rotateAngle = 0
+                    img = self.RotateImage(img, self.rotateAngle)
+
+                if self.checkBox_snp.isChecked():
+                    img = self.SaltPepper(img)
+                else:
+                    pass
 
                 # 이미지 Quality(File Size) 조절
                 if self.checkBox_iq.isChecked():
@@ -204,7 +213,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
                         self.err_code = 1
                         self.qualityVal = float(self.textEdit_qualityVal.toPlainText())
 
-                    self.QualityImage(img=img, path='./result/', name=newName, quality=self.qualityVal)
+                    imwrite('./result/' + newName, img, [int(IMWRITE_JPEG_QUALITY), self.qualityVal])
                 else:
                     imwrite('./result/' + newName, img)
 
@@ -243,6 +252,8 @@ class jpgConverter(QMainWindow, mainDlg_class):
         try:
             if str(self.textEdit_rotate.toPlainText()) != '0':
                 self.rotateAngle = abs(float(self.textEdit_rotate.toPlainText()))
+            else:
+                self.rotateAngle = 0
 
             oldName = self.sampleOriginal
             newName = self.sampleResult
@@ -278,7 +289,6 @@ class jpgConverter(QMainWindow, mainDlg_class):
                     self.n = int(float(self.textEdit_nVal.toPlainText()))
                 img = self.BlurImage(img=img, option=self.option, n=self.n)
 
-
             # 삼각함수를 이용한 비선형 리매핑
             if self.checkBox_nm.isChecked():
                 if self.textEdit_ampVal.toPlainText() != '':
@@ -309,6 +319,11 @@ class jpgConverter(QMainWindow, mainDlg_class):
             if self.rotateAngle != 0:
                 img = self.RotateImage(img, self.rotateAngle)
 
+            if self.checkBox_snp.isChecked():
+                img = self.SaltPepper(img)
+            else:
+                pass
+
             # 이미지 Quality(File Size) 조절
             if self.checkBox_iq.isChecked():
                 if self.iqdef_rbtn.isChecked():
@@ -317,11 +332,11 @@ class jpgConverter(QMainWindow, mainDlg_class):
                     self.err_code = 1
                     self.qualityVal = float(self.textEdit_qualityVal.toPlainText())
 
-                self.QualityImage(img=img, path='./', name=newName, quality=self.qualityVal)
+                imwrite(newName, img, [int(IMWRITE_JPEG_QUALITY), self.qualityVal])
             else:
                 imwrite(newName, img)
 
-            self.figResult.setPixmap(QPixmap(newName))
+            self.figResult.setPixmap(QPixmap(self.sampleResult))
             self.figResult.setScaledContents(True)
 
         except Exception as e:
@@ -339,7 +354,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
 
     def resetBtnFunction(self):
         self.textEdit_targetName.setText('')
-        self.textEdit_rotate.setText('')
+        self.textEdit_rotate.setText('0')
         self.startBtn.setEnabled(False)
 
         self.raw_rbtn.setChecked(True)
@@ -370,6 +385,47 @@ class jpgConverter(QMainWindow, mainDlg_class):
         self.rotateAngle = None
         self.loadList = []
         self.progressBar.setValue(0)
+
+    def SaltPepper(self, img):
+        # Getting the dimensions of the image
+        if img.ndim > 2:    # color
+            height, width, _ = img.shape
+        else:               # gray scale
+            height, width = img.shape
+
+        # Randomly pick some pixels in the image
+        # Pick a random number between height*width/80 and height*width/10
+        number_of_pixels = randint(int(height * width / 100), int(height * width / 10))
+
+        for i in range(number_of_pixels):
+            # Pick a random y coordinate
+            y_coord = randint(0, height - 1)
+
+            # Pick a random x coordinate
+            x_coord = randint(0, width - 1)
+
+            if img.ndim > 2:
+                img[y_coord][x_coord] = [randint(0, 255), randint(0, 255), randint(0, 255)]
+            else:
+                # Color that pixel to white
+                img[y_coord][x_coord] = 255
+
+        # Randomly pick some pixels in image
+        # Pick a random number between height*width/80 and height*width/10
+        for i in range(number_of_pixels):
+            # Pick a random y coordinate
+            y_coord = randint(0, height - 1)
+
+            # Pick a random x coordinate
+            x_coord = randint(0, width - 1)
+
+            if img.ndim > 2:
+                img[y_coord][x_coord] = [randint(0, 255), randint(0, 255), randint(0, 255)]
+            else:
+                # Color that pixel to white
+                img[y_coord][x_coord] = 0
+
+        return img
 
     def BlurImage(self, img, option=0, n=3):
         '''
@@ -404,10 +460,10 @@ class jpgConverter(QMainWindow, mainDlg_class):
         return result
 
     def RotateImage(self, img, angle):
-        if len(img[0]) == 2:
-            height, width = img.shape
-        else:
+        if img.ndim > 2:
             height, width, channel = img.shape
+        else:
+            height, width = img.shape
 
         matrix = getRotationMatrix2D((width / 2, height / 2), angle, 1)
         result = warpAffine(img, matrix, (width, height))
@@ -462,9 +518,6 @@ class jpgConverter(QMainWindow, mainDlg_class):
         result = remap(img, mapx, mapy, INTER_LINEAR)
 
         return result
-
-    def QualityImage(self, path, name, img, quality):
-        imwrite(path+name, img, [int(IMWRITE_JPEG_QUALITY), quality])
 
     def rBtnCtrl(self):
         if self.quality_rbtn.isChecked():
