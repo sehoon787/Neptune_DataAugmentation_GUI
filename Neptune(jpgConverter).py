@@ -127,8 +127,11 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 self.err_code = 0
                 raise ValueError
 
-            if str(self.textEdit_rotate.toPlainText()) != '0':
+            if str(self.textEdit_rotate.toPlainText()) != '':
+                self.err_code = 4
                 self.rotateAngle = abs(float(self.textEdit_rotate.toPlainText()))
+            else:
+                self.rotateAngle = 0
 
             currentState = 'converting..\n'
             chdir(self.default_path)
@@ -206,8 +209,9 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 if self.rotateAngle != 0:
                     img = self.RotateImage(img, self.rotateAngle)
                 else:
-                    self.rotateAngle = 0
-                    img = self.RotateImage(img, self.rotateAngle)
+                    pass
+                    # self.rotateAngle = 0
+                    # img = self.RotateImage(img, self.rotateAngle)
 
                 # Salt & Pepper noise
                 if self.checkBox_snp.isChecked():
@@ -236,8 +240,6 @@ class jpgConverter(QMainWindow, mainDlg_class):
             self.loadState = 'loading..\n'
             self.loadList = []
 
-            self.startBtn.setEnabled(False)
-
             reply = QMessageBox.question(self, 'Message', 'Do you want to convert more files?',
                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
@@ -253,13 +255,18 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Nonlinear Mapping)")
             elif self.err_code == 3:
                 QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Lens Distortion)")
+            elif self.err_code == 4:
+                QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Rotate)")
+                self.textEdit_rotate.setText('')
+                self.rotateAngle = 0
             else:
                 QMessageBox.critical(self, "ERROR!!", str(e))
             self.err_code = None
 
     def preViewBtnFunction(self):
         try:
-            if str(self.textEdit_rotate.toPlainText()) != '0':
+            if str(self.textEdit_rotate.toPlainText()) != '':
+                self.err_code = 4
                 self.rotateAngle = abs(float(self.textEdit_rotate.toPlainText()))
             else:
                 self.rotateAngle = 0
@@ -333,6 +340,8 @@ class jpgConverter(QMainWindow, mainDlg_class):
             # 이미지 Rotate
             if self.rotateAngle != 0:
                 img = self.RotateImage(img, self.rotateAngle)
+            else:
+                pass
 
             # Salt & Pepper noise
             if self.checkBox_snp.isChecked():
@@ -363,6 +372,10 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Nonlinear Mapping)")
             elif self.err_code == 3:
                 QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Lens Distortion)")
+            elif self.err_code == 4:
+                QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Rotate)")
+                self.textEdit_rotate.setText('')
+                self.rotateAngle = 0
             else:
                 QMessageBox.critical(self, "ERROR!!", str(e))
             self.err_code = None
