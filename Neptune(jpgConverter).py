@@ -209,6 +209,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
                     self.rotateAngle = 0
                     img = self.RotateImage(img, self.rotateAngle)
 
+                # Salt & Pepper noise
                 if self.checkBox_snp.isChecked():
                     img = self.SaltPepper(img)
                 else:
@@ -333,6 +334,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
             if self.rotateAngle != 0:
                 img = self.RotateImage(img, self.rotateAngle)
 
+            # Salt & Pepper noise
             if self.checkBox_snp.isChecked():
                 img = self.SaltPepper(img)
             else:
