@@ -166,34 +166,40 @@ class jpgConverter(QMainWindow, mainDlg_class):
                         self.n = 15
 
                     if self.textEdit_nVal.toPlainText() != '':
-                        self.err_code = 3
+                        self.err_code = 1
                         self.n = int(float(self.textEdit_nVal.toPlainText()))
+                    self.err_code = None
+
                     img = self.BlurImage(img=img, option=self.option, n=self.n)
 
                 # 삼각함수를 이용한 비선형 리매핑
                 if self.checkBox_nm.isChecked():
+                    self.ampVal = 10
+                    self.waveFreqVal = 32
+
                     if self.textEdit_ampVal.toPlainText() != '':
                         self.err_code = 2
                         self.ampVal = float(self.textEdit_ampVal.toPlainText())
-                    elif self.textEdit_waveFreqVal.toPlainText() != '':
+                    if self.textEdit_waveFreqVal.toPlainText() != '':
                         self.err_code = 2
                         self.waveFreqVal = float(self.textEdit_waveFreqVal.toPlainText())
-                    else:
-                        self.ampVal = 10
-                        self.waveFreqVal = 32
+                    self.err_code = None
+
                     img = self.NonlinearMappingImage(img=img, amp=self.ampVal, waveFreq=self.waveFreqVal)
 
                 # 오목/볼록 렌즈 왜곡 리매핑
                 if self.checkBox_ld.isChecked():
+                    self.expVal = 2
+                    self.scaleVal = 1
+
                     if self.textEdit_expVal.toPlainText() != '':
                         self.err_code = 3
                         self.expVal = float(self.textEdit_expVal.toPlainText())
-                    elif self.textEdit_scaleVal.toPlainText() != '':
+                    if self.textEdit_scaleVal.toPlainText() != '':
                         self.err_code = 3
                         self.scaleVal = float(self.textEdit_scaleVal.toPlainText())
-                    else:
-                        self.expVal = 2
-                        self.scaleVal = 1
+                    self.err_code = None
+
                     img = self.LensDistortionImage(img=img, exp=self.expVal, scale=self.scaleVal)
 
                 # 이미지 Rotate
@@ -213,7 +219,6 @@ class jpgConverter(QMainWindow, mainDlg_class):
                     if self.iqdef_rbtn.isChecked():
                         self.qualityVal = 80
                     else:
-                        self.err_code = 1
                         self.qualityVal = float(self.textEdit_qualityVal.toPlainText())
 
                     imwrite('./result/' + newName, img, [int(IMWRITE_JPEG_QUALITY), self.qualityVal])
@@ -290,32 +295,38 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 if self.textEdit_nVal.toPlainText() != '':
                     self.err_code = 1
                     self.n = int(float(self.textEdit_nVal.toPlainText()))
+                self.err_code = None
+
                 img = self.BlurImage(img=img, option=self.option, n=self.n)
 
             # 삼각함수를 이용한 비선형 리매핑
             if self.checkBox_nm.isChecked():
+                self.ampVal = 10
+                self.waveFreqVal = 32
+
                 if self.textEdit_ampVal.toPlainText() != '':
                     self.err_code = 2
                     self.ampVal = float(self.textEdit_ampVal.toPlainText())
-                elif self.textEdit_waveFreqVal.toPlainText() != '':
+                if self.textEdit_waveFreqVal.toPlainText() != '':
                     self.err_code = 2
                     self.waveFreqVal = float(self.textEdit_waveFreqVal.toPlainText())
-                else:
-                    self.ampVal = 10
-                    self.waveFreqVal = 32
+                self.err_code = None
+
                 img = self.NonlinearMappingImage(img=img, amp=self.ampVal, waveFreq=self.waveFreqVal)
 
             # 오목/볼록 렌즈 왜곡 리매핑
             if self.checkBox_ld.isChecked():
+                self.expVal = 2
+                self.scaleVal = 1
+
                 if self.textEdit_expVal.toPlainText() != '':
                     self.err_code = 3
                     self.expVal = float(self.textEdit_expVal.toPlainText())
-                elif self.textEdit_scaleVal.toPlainText() != '':
+                if self.textEdit_scaleVal.toPlainText() != '':
                     self.err_code = 3
                     self.scaleVal = float(self.textEdit_scaleVal.toPlainText())
-                else:
-                    self.expVal = 2
-                    self.scaleVal = 1
+                self.err_code = None
+
                 img = self.LensDistortionImage(img=img, exp=self.expVal, scale=self.scaleVal)
 
             # 이미지 Rotate
@@ -332,7 +343,6 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 if self.iqdef_rbtn.isChecked():
                     self.qualityVal = 80
                 else:
-                    self.err_code = 1
                     self.qualityVal = float(self.textEdit_qualityVal.toPlainText())
 
                 imwrite(newName, img, [int(IMWRITE_JPEG_QUALITY), self.qualityVal])
