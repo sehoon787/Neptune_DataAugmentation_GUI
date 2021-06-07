@@ -8,7 +8,7 @@ First click Load button, and load png or jpg files to use Data set for DL.
 And then write Target Name you want to change (e.g. hammer, 망치...)
 If you choose Raw Data in Design Method then just you can change file name.
 Finally Press Start Button. 
-And if there is .txt file having same name with target png(jpg) file, then copy that conveted txt file at the same time in ./result path. But txt file SHOLUD BE EXISTS in same path target image file
+And if there is .txt file having same name with target png(jpg) file, then copy that conveted txt file at the same time in ./result path. But txt file SHOLUD BE EXISTS in same target image file path
 
 When you want to reset current configuration, press reset button.
 
