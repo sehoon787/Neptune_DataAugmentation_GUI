@@ -2,6 +2,7 @@ import sys
 from sys import argv
 from os.path import join, dirname, abspath
 from os import chdir, getcwd, mkdir
+from shutil import copy
 
 # Main Dialog
 from PyQt5 import uic
@@ -31,12 +32,6 @@ class jpgConverter(QMainWindow, mainDlg_class):
     def __init__(self):
         super(jpgConverter, self).__init__()
         self.setupUi(self)
-
-        # Make directory to save result files
-        try:
-            mkdir('./result')
-        except:
-            pass
 
         icon = resource_path("neptune.png")
         self.setWindowIcon(QIcon(icon))
@@ -117,6 +112,12 @@ class jpgConverter(QMainWindow, mainDlg_class):
 
     def startBtnFunction(self):
         try:
+            # Make directory to save result files
+            try:
+                mkdir('./result')
+            except:
+                pass
+
             self.progressBar.setValue(0)
             self.progressBar.setMaximum(len(self.loadList))
             filecnt = 0
@@ -124,14 +125,16 @@ class jpgConverter(QMainWindow, mainDlg_class):
             if str(self.textEdit_targetName.toPlainText()) != '':
                 self.targetName = str(self.textEdit_targetName.toPlainText())
             else:
-                self.err_code = 0
-                raise ValueError
+                self.targetName = None
+                # self.err_code = 0
+                # raise ValueError
 
             if str(self.textEdit_rotate.toPlainText()) != '':
                 self.err_code = 4
                 self.rotateAngle = abs(float(self.textEdit_rotate.toPlainText()))
             else:
                 self.rotateAngle = 0
+            self.err_code = None
 
             currentState = 'converting..\n'
             chdir(self.default_path)
@@ -139,8 +142,20 @@ class jpgConverter(QMainWindow, mainDlg_class):
             for i, name in enumerate(self.loadList):
                 temp = name.split('/')
                 oldName = temp[-1]
-                newName = self.targetName + '_' + str(i) + '.jpg'
-                currentState = currentState + str(i) + ' : ' + oldName + ' => ' + newName + '\n'
+                if self.targetName != None:
+                    newName = self.targetName + '_' + str(i) + '.jpg'
+                    currentState = currentState + str(i) + ' : ' + oldName + ' => ' + newName + '\n'
+
+                    try:
+                        oldTxtName = name[:-4] + '.txt'
+                        newTxtName = './result/' + newName[:-4] + '.txt'
+                        copy(oldTxtName, newTxtName)
+                    except:
+                        pass
+
+                else:
+                    newName = oldName[:-4] + '.jpg'
+                    currentState = currentState + str(i) + ' : ' + oldName + ' => ' + newName + '\n'
 
                 ff = fromfile(name, uint8)  # 한글경로 변환
 
@@ -238,7 +253,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
             currentState = currentState + 'Finish!'
             self.textEdit_jpgList.setText(currentState)
             self.loadState = 'loading..\n'
-            self.loadList = []
+            # self.loadList = []
 
             reply = QMessageBox.question(self, 'Message', 'Do you want to convert more files?',
                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -247,9 +262,9 @@ class jpgConverter(QMainWindow, mainDlg_class):
             else:
                 sys.exit()
         except Exception as e:
-            if self.err_code == 0:
-                QMessageBox.critical(self, "ERROR!!", "Set Target Name!")
-            elif self.err_code == 1:
+            # if self.err_code == 0:
+            #     QMessageBox.critical(self, "ERROR!!", "Set Target Name!")
+            if self.err_code == 1:
                 QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Bluring)")
             elif self.err_code == 2:
                 QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Nonlinear Mapping)")
@@ -270,6 +285,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 self.rotateAngle = abs(float(self.textEdit_rotate.toPlainText()))
             else:
                 self.rotateAngle = 0
+            self.err_code = None
 
             oldName = self.sampleOriginal
             newName = self.sampleResult
@@ -364,9 +380,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
             self.figResult.setScaledContents(True)
 
         except Exception as e:
-            if self.err_code == 0:
-                QMessageBox.critical(self, "ERROR!!", "Set Target Name!")
-            elif self.err_code == 1:
+            if self.err_code == 1:
                 QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Bluring)")
             elif self.err_code == 2:
                 QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Nonlinear Mapping)")
