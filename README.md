@@ -1,4 +1,4 @@
-# Neptune 2.0 (jpg-Converter_GUI)
+# Neptune 3.0 (Data Augmentation Tool)
 
 This tool convert png file to jpg file not only change name but also file format completely.
 And this will help you change jpg Data set files name to recongnize easily.
@@ -42,7 +42,7 @@ It supports Horizontal Flip, Vertical Flip, Vertical & Horizontal Flip.
 ./result/'targetName'_'i'.jpg
 
 # Make exe
-pyinstaller --noconsole --add-binary "neptune.png";"." --add-binary "jpgConverter.ui";"." --add-binary "sampleOriginal.jpg";"." --add-binary "sampleResult.jpg";"." --onefile --icon=../icons/neptune.ico "Neptune(jpgConverter).py"
+pyinstaller --noconsole --add-binary "neptune.png";"." --add-binary "jpgConverter.ui";"." --add-binary "sampleOriginal.jpg";"." --add-binary "sampleResult.jpg";"." --onefile --icon=../icons/neptune.ico "Neptune(DataAugmentation).py"
 
 # icon, png
 icon from https://icon-icons.com/ko/, and sampleOriginal.jpg has been taken by me
