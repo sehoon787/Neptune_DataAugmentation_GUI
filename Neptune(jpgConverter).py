@@ -15,11 +15,15 @@ from cv2 import getRotationMatrix2D, warpAffine
 from cv2 import filter2D, blur, GaussianBlur, medianBlur, bilateralFilter
 from cv2 import remap, INTER_CUBIC, BORDER_DEFAULT
 from cv2 import cartToPolar, polarToCart, INTER_LINEAR
+from cv2 import flip, cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR
 from cv2 import IMWRITE_JPEG_QUALITY, imwrite
 
 from random import randint
 from numpy import fromfile, uint8, float32, abs
 from numpy import ones, sin, indices
+from math import ceil, atan2, sqrt, pow, pi, radians, cos
+from math import sin as msin
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -68,6 +72,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
         self.checkBox_blur.clicked.connect(self.ChkBoxCtrl)
         self.checkBox_nm.clicked.connect(self.ChkBoxCtrl)
         self.checkBox_ld.clicked.connect(self.ChkBoxCtrl)
+        self.checkBox_flip.clicked.connect(self.ChkBoxCtrl)
 
         # oldName = 'sampleOriginal.jpg'
         # newName = 'sampleResult.jpg'
@@ -126,8 +131,8 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 self.targetName = str(self.textEdit_targetName.toPlainText())
             else:
                 self.targetName = None
-                # self.err_code = 0
-                # raise ValueError
+                self.err_code = 0
+                10/0
 
             if str(self.textEdit_rotate.toPlainText()) != '':
                 self.err_code = 4
@@ -147,9 +152,9 @@ class jpgConverter(QMainWindow, mainDlg_class):
                     currentState = currentState + str(i) + ' : ' + oldName + ' => ' + newName + '\n'
 
                     try:
-                        oldTxtName = name[:-4] + '.txt'
-                        newTxtName = './result/' + newName[:-4] + '.txt'
-                        copy(oldTxtName, newTxtName)
+                        self.oldTxtName = name[:-4] + '.txt'
+                        self.newTxtName = './result/' + newName[:-4] + '.txt'
+                        copy(self.oldTxtName, self.newTxtName)
                     except:
                         pass
 
@@ -221,8 +226,8 @@ class jpgConverter(QMainWindow, mainDlg_class):
                     img = self.LensDistortionImage(img=img, exp=self.expVal, scale=self.scaleVal)
 
                 # 이미지 Rotate
-                if self.rotateAngle != 0:
-                    img = self.RotateImage(img, self.rotateAngle)
+                if self.rotateAngle:
+                    img = self.RotateImage(fileName=self.newTxtName, img=img, angle=self.rotateAngle)
                 else:
                     pass
                     # self.rotateAngle = 0
@@ -233,6 +238,15 @@ class jpgConverter(QMainWindow, mainDlg_class):
                     img = self.SaltPepper(img)
                 else:
                     pass
+
+                # Flip Image
+                if self.checkBox_flip.isChecked():
+                    if self.h_rBtn.isChecked():  # 좌우
+                        img = self.FlipImage(img, 1)
+                    elif self.v_rBtn.isChecked():  # 상하
+                        img = self.FlipImage(img, 0)
+                    else:  # 상하 좌우
+                        img = self.FlipImage(img, -1)
 
                 # 이미지 Quality(File Size) 조절
                 if self.checkBox_iq.isChecked():
@@ -262,9 +276,9 @@ class jpgConverter(QMainWindow, mainDlg_class):
             else:
                 sys.exit()
         except Exception as e:
-            # if self.err_code == 0:
-            #     QMessageBox.critical(self, "ERROR!!", "Set Target Name!")
-            if self.err_code == 1:
+            if self.err_code == 0:
+                QMessageBox.critical(self, "ERROR!!", "Set Target Name!")
+            elif self.err_code == 1:
                 QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Bluring)")
             elif self.err_code == 2:
                 QMessageBox.critical(self, "ERROR!!", "Set Number Not text! (Nonlinear Mapping)")
@@ -353,9 +367,9 @@ class jpgConverter(QMainWindow, mainDlg_class):
 
                 img = self.LensDistortionImage(img=img, exp=self.expVal, scale=self.scaleVal)
 
-            # 이미지 Rotate
-            if self.rotateAngle != 0:
-                img = self.RotateImage(img, self.rotateAngle)
+            # Image Rotate
+            if self.rotateAngle:
+                img = self.RotateImage(fileName=None, img=img, angle=self.rotateAngle)
             else:
                 pass
 
@@ -364,6 +378,15 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 img = self.SaltPepper(img)
             else:
                 pass
+
+            # Flip Image
+            if self.checkBox_flip.isChecked():
+                if self.h_rBtn.isChecked():  # 좌우
+                    img = self.FlipImage(img, 1)
+                elif self.v_rBtn.isChecked():  # 상하
+                    img = self.FlipImage(img, 0)
+                else:  # 상하 좌우
+                    img = self.FlipImage(img, -1)
 
             # 이미지 Quality(File Size) 조절
             if self.checkBox_iq.isChecked():
@@ -416,6 +439,12 @@ class jpgConverter(QMainWindow, mainDlg_class):
         self.textEdit_waveFreqVal.setEnabled(False)
         self.textEdit_expVal.setEnabled(False)
         self.textEdit_scaleVal.setEnabled(False)
+
+        self.checkBox_flip.setChecked(False)
+        self.h_rBtn.setChecked(True)
+        self.h_rBtn.setEnabled(False)
+        self.v_rBtn.setEnabled(False)
+        self.vh_rBtn.setEnabled(False)
 
         self.textEdit_nVal.setText('15')
         self.textEdit_qualityVal.setText('')
@@ -501,17 +530,6 @@ class jpgConverter(QMainWindow, mainDlg_class):
             result = bilateralFilter(img, n, 75, 75)
         return result
 
-    def RotateImage(self, img, angle):
-        if img.ndim > 2:
-            height, width, channel = img.shape
-        else:
-            height, width = img.shape
-
-        matrix = getRotationMatrix2D((width / 2, height / 2), angle, 1)
-        result = warpAffine(img, matrix, (width, height))
-
-        return result
-
     def NonlinearMappingImage(self, img, amp=10, waveFreq=32):
         h, w = img.shape[:2]  # 입력 영상의 높이와 넓이 정보 추출
 
@@ -561,6 +579,26 @@ class jpgConverter(QMainWindow, mainDlg_class):
 
         return result
 
+    def FlipImage(self, img, mode):
+        '''
+        :param mode: 1은 좌우 반전, 0은 상하 반전, -1은 상하 좌우 반전
+        '''
+        # Getting the dimensions of the image
+        imgDim = img.ndim
+        if imgDim > 2:    # color
+            img = cvtColor(img, COLOR_BGR2RGB)
+        else:               # gray scale
+            pass
+
+        result = flip(img, mode)
+
+        if imgDim > 2:    # color
+            result = cvtColor(result, COLOR_RGB2BGR)
+        else:               # gray scale
+            pass
+
+        return result
+
     def rBtnCtrl(self):
         if self.quality_rbtn.isChecked():
             self.textEdit_qualityVal.setEnabled(True)
@@ -588,6 +626,131 @@ class jpgConverter(QMainWindow, mainDlg_class):
         else:
             self.textEdit_expVal.setEnabled(False)
             self.textEdit_scaleVal.setEnabled(False)
+
+        if self.checkBox_flip.isChecked():
+            self.v_rBtn.setEnabled(True)
+            self.h_rBtn.setEnabled(True)
+            self.vh_rBtn.setEnabled(True)
+        else:
+            self.v_rBtn.setEnabled(False)
+            self.h_rBtn.setEnabled(False)
+            self.vh_rBtn.setEnabled(False)
+
+    # rotate and make txt label
+    def RotateImage(self, fileName, img, angle):
+        if img.ndim > 2:
+            height, width, channel = img.shape
+        else:
+            height, width = img.shape
+
+        matrix = getRotationMatrix2D((width / 2, height / 2), angle, 1)
+        result = warpAffine(img, matrix, (width, height))
+
+        if fileName:
+            f_r = open(self.oldTxtName, 'r')
+            lines = f_r.readlines()
+
+            for line in lines:  # get each line's point pos
+                # line_split[0] : class, [1] : label_rect_center_x, [2] : label_rect_center_y, [3] : label_rect_width, [4] label_rect_height
+                # [1] ~ [3] is percent -> multiple with img's size
+                line_split_list = line.split(' ')
+                line_split = [float(x) for x in line_split_list]
+
+                img_center = width / 2, height / 2
+                labelRect_center = line_split[1] * width, line_split[2] * height
+
+                # draw rect center & labelRect
+                rect_points = self.createRect(labelRect_center, line_split[3] * width, line_split[4] * height)
+                labelRect_status = self.getPointStatus(labelRect_center, rect_points[0])
+
+                # labelRect center movement circle
+                labelRect_center_status = self.getPointStatus(img_center, labelRect_center)
+
+                # +180 : status's degree criterion is left to up, but sin/cos criterion is right to down
+                RotateRect_center = self.getRotatedPoints(img_center, labelRect_center_status[0],
+                                                     (labelRect_center_status[1] + 180 - angle) % 360)
+
+                RotateRect_degree = (
+                    (labelRect_status[1] + 180 - angle) % 360,
+                    (180 - labelRect_status[1] - angle) % 360,
+                    (360 - labelRect_status[1] - angle) % 360,
+                    (labelRect_status[1] - angle) % 360
+                )
+
+                RotatedRect_points = self.getRotatedPoints(RotateRect_center, labelRect_status[0], RotateRect_degree)
+
+                boundingRect_points = self.getBoundingPoins(RotatedRect_points)
+
+                # for get percent size value, divide with w, h
+                boundingRect = (
+                    round(RotateRect_center[0] / width, 6),
+                    round(RotateRect_center[1] / height, 6),
+                    round((boundingRect_points[0][0] - boundingRect_points[1][0]) / width, 6),
+                    round((boundingRect_points[0][1] - boundingRect_points[1][1]) / height, 6)
+                )
+                f_w = open(fileName, 'w')
+                f_w.write(str(int(line_split[0])) + ' ' + str(boundingRect[0]) + ' ' + str(boundingRect[1]) + ' ' +
+                          str(boundingRect[2]) + ' ' + str(boundingRect[3]) + '\n')
+            f_r.close()
+            f_w.close()
+
+        return result
+
+    def createRect(self, center, width, height):
+        # up-left
+        rect_point1 = ceil(center[0] - width / 2), ceil(center[1] - height / 2)
+        # down-left
+        rect_point2 = ceil(center[0] - width / 2), ceil(center[1] + height / 2)
+        # up-right
+        rect_point3 = ceil(center[0] + width / 2), ceil(center[1] - height / 2)
+        # down-left
+        rect_point4 = ceil(center[0] + width / 2), ceil(center[1] + height / 2)
+
+        rect_points = rect_point1, rect_point2, rect_point3, rect_point4
+
+        return rect_points
+
+    def getPointStatus(self, center, point1):
+        # center to point1 radius
+        point_radius = sqrt(pow(center[0] - point1[0], 2) + pow(center[1] - point1[1], 2))
+        point_degree = atan2(center[1] - point1[1], center[0] - point1[0]) * 180 / pi
+
+        point_status = point_radius, point_degree
+
+        return point_status
+
+    def getRotatedPoints(self, center, radius, degree):
+        rotated_points = []
+
+        if isinstance(degree, float):
+            rotate_radian = radians(degree)
+            rotated_points = center[0] + (cos(rotate_radian) * radius), center[1] + (
+                        msin(rotate_radian) * radius)
+
+        else:
+            for i in range(0, len(degree)):
+                rotate_radian = radians(degree[i])
+
+                rect_point = center[0] + (cos(rotate_radian) * radius), center[1] + (
+                            msin(rotate_radian) * radius)
+
+                rotated_points.append(rect_point)
+
+        return rotated_points
+
+    def getBoundingPoins(self, points):
+        max_x = max(points[0][0], points[1][0], points[2][0], points[3][0])
+        max_y = max(points[0][1], points[1][1], points[2][1], points[3][1])
+
+        min_x = min(points[0][0], points[1][0], points[2][0], points[3][0])
+        min_y = min(points[0][1], points[1][1], points[2][1], points[3][1])
+
+        start = max_x, max_y
+        end = min_x, min_y
+
+        bounding_points = start, end
+
+        return bounding_points
 
 
 if __name__ == "__main__":
