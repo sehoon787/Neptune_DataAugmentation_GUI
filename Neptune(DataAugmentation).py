@@ -23,11 +23,9 @@ from cv2 import IMWRITE_JPEG_QUALITY, imwrite
 from random import randint
 from numpy import fromfile, uint8, float32, abs
 from numpy import ones, sin, indices
-from numpy import min, max, clip
+from numpy import min as NPmin, max as NPmax, clip
 from math import ceil, atan2, sqrt, pow, pi, radians, cos
 from math import sin as msin
-
-
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -672,8 +670,8 @@ class DataAugmentation(QMainWindow, mainDlg_class):
                                                 NORM_MINMAX)  # 히스토그램 스트레칭은 NORM_MINMAX
 
                 # 넘파이로 히스토그램 스트레칭 구현
-                gmin = min(ycrcb_planes[0])
-                gmax = max(ycrcb_planes[0])
+                gmin = NPmin(ycrcb_planes[0])
+                gmax = NPmax(ycrcb_planes[0])
                 ycrcb_planes[0] = clip((ycrcb_planes[0] - gmin) * 255. / (gmax - gmin), 0, 255).astype(uint8)
 
             elif type == 2:  # Equalization
@@ -693,8 +691,8 @@ class DataAugmentation(QMainWindow, mainDlg_class):
                 dst = normalize(img, None, 0, 255, NORM_MINMAX)  # 히스토그램 스트레칭은 NORM_MINMAX
 
                 # 넘파이로 히스토그램 스트레칭 구현
-                gmin = min(dst)
-                gmax = max(dst)
+                gmin = NPmin(dst)
+                gmax = NPmax(dst)
                 result = clip((dst - gmin) * 255. / (gmax - gmin), 0, 255).astype(uint8)
             elif type == 2:  # Equalization
                 # 밝기 성분에 대해서만 히스토그램 평활화 수행
