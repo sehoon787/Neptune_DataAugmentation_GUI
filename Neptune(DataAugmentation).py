@@ -93,7 +93,7 @@ class DataAugmentation(QMainWindow, mainDlg_class):
         self.progressBar.setValue(0)
 
         filenames = QFileDialog.getOpenFileNames(self, 'Load jpg files', "",
-                                            "All Files(*);; jpg Files(*.jpg);;", "png Files(*.png);;", '/home')
+                                            "All Files(*);; jpg Files(*.jpg);; png Files(*.png);;" , '/home')
         if filenames[0]:
             filenames = list(filenames)
             # filenames.reverse()           # 파일 선택 역순 정렬
