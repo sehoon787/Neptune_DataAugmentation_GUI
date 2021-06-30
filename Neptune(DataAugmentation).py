@@ -16,13 +16,17 @@ from cv2 import filter2D, blur, GaussianBlur, medianBlur, bilateralFilter
 from cv2 import remap, INTER_CUBIC, BORDER_DEFAULT
 from cv2 import cartToPolar, polarToCart, INTER_LINEAR
 from cv2 import flip, cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR
+from cv2 import split as cvSplit
+from cv2 import COLOR_BGR2YCrCb, NORM_MINMAX, normalize, equalizeHist, createCLAHE, merge, COLOR_YCrCb2BGR
 from cv2 import IMWRITE_JPEG_QUALITY, imwrite
 
 from random import randint
 from numpy import fromfile, uint8, float32, abs
 from numpy import ones, sin, indices
+from numpy import min, max, clip
 from math import ceil, atan2, sqrt, pow, pi, radians, cos
 from math import sin as msin
+
 
 
 def resource_path(relative_path):
@@ -32,9 +36,9 @@ def resource_path(relative_path):
 form = resource_path("jpgConverter.ui")
 mainDlg_class = uic.loadUiType(form)[0]
 
-class jpgConverter(QMainWindow, mainDlg_class):
+class DataAugmentation(QMainWindow, mainDlg_class):
     def __init__(self):
-        super(jpgConverter, self).__init__()
+        super(DataAugmentation, self).__init__()
         self.setupUi(self)
 
         icon = resource_path("neptune.png")
@@ -73,6 +77,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
         self.checkBox_nm.clicked.connect(self.ChkBoxCtrl)
         self.checkBox_ld.clicked.connect(self.ChkBoxCtrl)
         self.checkBox_flip.clicked.connect(self.ChkBoxCtrl)
+        self.checkBox_cont.clicked.connect(self.ChkBoxCtrl)
 
         # oldName = 'sampleOriginal.jpg'
         # newName = 'sampleResult.jpg'
@@ -88,7 +93,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
         self.progressBar.setValue(0)
 
         filenames = QFileDialog.getOpenFileNames(self, 'Load jpg files', "",
-                                            "All Files(*);; jpg Files(*.jpg);;", '/home')
+                                            "All Files(*);; jpg Files(*.jpg);;", "png Files(*.png);;", '/home')
         if filenames[0]:
             filenames = list(filenames)
             # filenames.reverse()           # 파일 선택 역순 정렬
@@ -156,6 +161,7 @@ class jpgConverter(QMainWindow, mainDlg_class):
                         self.newTxtName = './result/' + newName[:-4] + '.txt'
                         copy(self.oldTxtName, self.newTxtName)
                     except:
+                        self.newTxtName = None
                         pass
 
                 else:
@@ -230,8 +236,6 @@ class jpgConverter(QMainWindow, mainDlg_class):
                     img = self.RotateImage(fileName=self.newTxtName, img=img, angle=self.rotateAngle)
                 else:
                     pass
-                    # self.rotateAngle = 0
-                    # img = self.RotateImage(img, self.rotateAngle)
 
                 # Salt & Pepper noise
                 if self.checkBox_snp.isChecked():
@@ -242,11 +246,20 @@ class jpgConverter(QMainWindow, mainDlg_class):
                 # Flip Image
                 if self.checkBox_flip.isChecked():
                     if self.h_rBtn.isChecked():  # 좌우
-                        img = self.FlipImage(img, 1)
+                        img = self.FlipImage(self.newTxtName, img, 1)
                     elif self.v_rBtn.isChecked():  # 상하
-                        img = self.FlipImage(img, 0)
+                        img = self.FlipImage(self.newTxtName, img, 0)
                     else:  # 상하 좌우
-                        img = self.FlipImage(img, -1)
+                        img = self.FlipImage(self.newTxtName, img, -1)
+
+                # set Contrast of Image
+                if self.checkBox_cont.isChecked():
+                    if self.stre_rBtn.isChecked():  # Stretching
+                        img = self.Contrast(img, 1)
+                    elif self.equa_rBtn.isChecked():  # Equalization
+                        img = self.Contrast(img, 2)
+                    else:  # CLAHE
+                        img = self.Contrast(img, 3)
 
                 # 이미지 Quality(File Size) 조절
                 if self.checkBox_iq.isChecked():
@@ -382,11 +395,20 @@ class jpgConverter(QMainWindow, mainDlg_class):
             # Flip Image
             if self.checkBox_flip.isChecked():
                 if self.h_rBtn.isChecked():  # 좌우
-                    img = self.FlipImage(img, 1)
+                    img = self.FlipImage(None, img, 1)
                 elif self.v_rBtn.isChecked():  # 상하
-                    img = self.FlipImage(img, 0)
+                    img = self.FlipImage(None, img, 0)
                 else:  # 상하 좌우
-                    img = self.FlipImage(img, -1)
+                    img = self.FlipImage(None, img, -1)
+
+            # set Contrast of Image
+            if self.checkBox_cont.isChecked():
+                if self.stre_rBtn.isChecked():  # Stretching
+                    img = self.Contrast(img, 1)
+                elif self.equa_rBtn.isChecked():  # Equalization
+                    img = self.Contrast(img, 2)
+                else:  # CLAHE
+                    img = self.Contrast(img, 3)
 
             # 이미지 Quality(File Size) 조절
             if self.checkBox_iq.isChecked():
@@ -445,6 +467,12 @@ class jpgConverter(QMainWindow, mainDlg_class):
         self.h_rBtn.setEnabled(False)
         self.v_rBtn.setEnabled(False)
         self.vh_rBtn.setEnabled(False)
+
+        self.checkBox_cont.setChecked(False)
+        self.stre_rBtn.setChecked(True)
+        self.stre_rBtn.setEnabled(False)
+        self.equa_rBtn.setEnabled(False)
+        self.clahe_rBtn.setEnabled(False)
 
         self.textEdit_nVal.setText('15')
         self.textEdit_qualityVal.setText('')
@@ -579,10 +607,13 @@ class jpgConverter(QMainWindow, mainDlg_class):
 
         return result
 
-    def FlipImage(self, img, mode):
+    def FlipImage(self, fileName, img, type):
         '''
         :param mode: 1은 좌우 반전, 0은 상하 반전, -1은 상하 좌우 반전
         '''
+
+        newContent = ''
+
         # Getting the dimensions of the image
         imgDim = img.ndim
         if imgDim > 2:    # color
@@ -590,12 +621,87 @@ class jpgConverter(QMainWindow, mainDlg_class):
         else:               # gray scale
             pass
 
-        result = flip(img, mode)
+        result = flip(img, type)
 
         if imgDim > 2:    # color
             result = cvtColor(result, COLOR_RGB2BGR)
         else:               # gray scale
             pass
+
+        if fileName:
+            f_r = open(fileName, 'r')
+            lines = f_r.readlines()
+
+            for line in lines:  # get each line's point pos
+                line_split_list = line.split(' ')
+                line_split = [float(x) for x in line_split_list]
+
+                if type == 1:
+                    newContent += str(int(line_split[0])) + ' ' + str(round(1-line_split[1], 6)) + \
+                                  ' ' + str(round(line_split[2], 6)) + ' ' + str(round(line_split[3], 6)) + \
+                                  ' ' + str(round(line_split[4], 6)) + ' ' + '\n'
+                elif type == 0:
+                    newContent += str(int(line_split[0])) + ' ' + str(round(line_split[1], 6)) + \
+                                  ' ' + str(round(1-line_split[2], 6)) + ' ' + str(round(line_split[3], 6)) + \
+                                  ' ' + str(round(line_split[4], 6)) + ' ' + '\n'
+                else:
+                    newContent += str(int(line_split[0])) + ' ' + str(round(1-line_split[1], 6)) + \
+                                  ' ' + str(round(1-line_split[2], 6)) + ' ' + str(round(line_split[3], 6)) + \
+                                  ' ' + str(round(line_split[4], 6)) + ' ' + '\n'
+
+            f_r.close()
+
+            with open(fileName, 'w') as f_w:
+                f_w.write(newContent)
+            f_w.close()
+
+        return result
+
+    def Contrast(self, img, type):
+        '''
+        :param type: 1: Stretching, 2: Equalization, 3: CLAHE
+        '''
+        if img.ndim > 2:
+            src_ycrcb = cvtColor(img, COLOR_BGR2YCrCb)
+            ycrcb_planes = cvSplit(src_ycrcb)
+
+            if type == 1:  # Stretching
+                # 영상 내 픽셀의 최소, 최대값의 비율을 이용하여 고정된 비율로 영상을 낮은 밝기와 높은 밝기로 당겨주는 처리
+                # 히스토그램은 original과 normalize한 것과 동일하지만 조금 더 선명해짐
+                ycrcb_planes[0] = normalize(ycrcb_planes[0], None, 0, 255,
+                                                NORM_MINMAX)  # 히스토그램 스트레칭은 NORM_MINMAX
+
+                # 넘파이로 히스토그램 스트레칭 구현
+                gmin = min(ycrcb_planes[0])
+                gmax = max(ycrcb_planes[0])
+                ycrcb_planes[0] = clip((ycrcb_planes[0] - gmin) * 255. / (gmax - gmin), 0, 255).astype(uint8)
+
+            elif type == 2:  # Equalization
+                # 밝기 성분에 대해서만 히스토그램 평활화 수행
+                ycrcb_planes[0] = equalizeHist(ycrcb_planes[0])
+
+            else:  # CLAHE(Contrast-limited adaptive histogram equalization)
+                clahe = createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+                ycrcb_planes[0] = clahe.apply(ycrcb_planes[0])
+
+            dst_ycrcb = merge(ycrcb_planes)
+            result = cvtColor(dst_ycrcb, COLOR_YCrCb2BGR)
+        else:
+            if type == 1:  # Stretching
+                # 영상 내 픽셀의 최소, 최대값의 비율을 이용하여 고정된 비율로 영상을 낮은 밝기와 높은 밝기로 당겨주는 처리
+                # 히스토그램은 original과 normalize한 것과 동일하지만 조금 더 선명해짐
+                dst = normalize(img, None, 0, 255, NORM_MINMAX)  # 히스토그램 스트레칭은 NORM_MINMAX
+
+                # 넘파이로 히스토그램 스트레칭 구현
+                gmin = min(dst)
+                gmax = max(dst)
+                result = clip((dst - gmin) * 255. / (gmax - gmin), 0, 255).astype(uint8)
+            elif type == 2:  # Equalization
+                # 밝기 성분에 대해서만 히스토그램 평활화 수행
+                result = equalizeHist(img)
+            else:  # CLAHE(Contrast-limited adaptive histogram equalization)
+                clahe = createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+                result = clahe.apply(img)
 
         return result
 
@@ -636,6 +742,15 @@ class jpgConverter(QMainWindow, mainDlg_class):
             self.h_rBtn.setEnabled(False)
             self.vh_rBtn.setEnabled(False)
 
+        if self.checkBox_cont.isChecked():
+            self.stre_rBtn.setEnabled(True)
+            self.equa_rBtn.setEnabled(True)
+            self.clahe_rBtn.setEnabled(True)
+        else:
+            self.stre_rBtn.setEnabled(False)
+            self.equa_rBtn.setEnabled(False)
+            self.clahe_rBtn.setEnabled(False)
+
     # rotate and make txt label
     def RotateImage(self, fileName, img, angle):
         if img.ndim > 2:
@@ -646,8 +761,9 @@ class jpgConverter(QMainWindow, mainDlg_class):
         matrix = getRotationMatrix2D((width / 2, height / 2), angle, 1)
         result = warpAffine(img, matrix, (width, height))
 
+        newContent = ''
         if fileName:
-            f_r = open(self.oldTxtName, 'r')
+            f_r = open(fileName, 'r')
             lines = f_r.readlines()
 
             for line in lines:  # get each line's point pos
@@ -688,10 +804,14 @@ class jpgConverter(QMainWindow, mainDlg_class):
                     round((boundingRect_points[0][0] - boundingRect_points[1][0]) / width, 6),
                     round((boundingRect_points[0][1] - boundingRect_points[1][1]) / height, 6)
                 )
-                f_w = open(fileName, 'w')
-                f_w.write(str(int(line_split[0])) + ' ' + str(boundingRect[0]) + ' ' + str(boundingRect[1]) + ' ' +
-                          str(boundingRect[2]) + ' ' + str(boundingRect[3]) + '\n')
+
+                newContent += str(int(line_split[0])) + ' ' + str(boundingRect[0]) + ' ' + str(boundingRect[1]) + ' ' + \
+                              str(boundingRect[2]) + ' ' + str(boundingRect[3]) + '\n'
+
             f_r.close()
+
+            with open(fileName, 'w') as f_w:
+                f_w.write(newContent)
             f_w.close()
 
         return result
@@ -755,6 +875,6 @@ class jpgConverter(QMainWindow, mainDlg_class):
 
 if __name__ == "__main__":
     app = QApplication(argv)
-    win = jpgConverter()
+    win = DataAugmentation()
     win.show()
     app.exec_()
