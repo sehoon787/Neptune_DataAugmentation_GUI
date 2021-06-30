@@ -16,7 +16,7 @@ When you want to reset current configuration, press reset button.
 If you choose Gray Scale in Design Method then convert color image files to gray scale.
 When you want to rotate images then write dgree on Rotate textbox.
 And make Salt & Pepper noise in image by checking Salt Pepper check box.
-If you use rotate function, then it saves rotated txt file as well based on original label txt file.
+If you use rotate or filep function, then it saves rotated txt file as well based on original label txt file.
 
 # Bluring
 This tool provide 5 knids of method
@@ -35,8 +35,11 @@ Insert Nonlinear Mapping Effect
 # Lens Distortion
 Distort image with Lens Distortion effect
 
-# Lens Distortion
-It supports Horizontal Flip, Vertical Flip, Vertical & Horizontal Flip.
+# Flip Image
+It supports Horizontal Flip, Vertical Flip, Vertical & Horizontal Flip. And tool makes modified labeled txt file. 
+
+# Contrast
+You can set Contrast of images by using Histogram Stretching, Histogram Equalization, CLAHE.
 
 # save format
 ./result/'targetName'_'i'.jpg
