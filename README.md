@@ -1,7 +1,7 @@
 # Neptune 3.0 (Data Augmentation Tool)
 
 This tool convert png file to jpg file not only change name but also file format completely.
-And this will help you change jpg Data set files name to recongnize easily. Additionally you can choose many kind of noise options for data augmentation
+And this will help you change jpg Data set files name to recongnize easily. Additionally you can choose many kind of noise options for data augmentation with txt file(for making yolo weight file)
 
 # Change file name and .png to .jpg
 First click Load button, and load png or jpg files to use Data set for DL.
