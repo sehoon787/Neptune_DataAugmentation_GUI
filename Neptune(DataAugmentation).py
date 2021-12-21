@@ -793,7 +793,7 @@ class DataAugmentation(QMainWindow, mainDlg_class):
 
                 RotatedRect_points = self.getRotatedPoints(RotateRect_center, labelRect_status[0], RotateRect_degree)
 
-                boundingRect_points = self.getBoundingPoins(RotatedRect_points)
+                boundingRect_points = self.getBoundingPoints(RotatedRect_points)
 
                 # for get percent size value, divide with w, h
                 boundingRect = (
