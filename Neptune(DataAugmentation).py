@@ -856,7 +856,7 @@ class DataAugmentation(QMainWindow, mainDlg_class):
 
         return rotated_points
 
-    def getBoundingPoins(self, points):
+    def getBoundingPoints(self, points):
         max_x = max(points[0][0], points[1][0], points[2][0], points[3][0])
         max_y = max(points[0][1], points[1][1], points[2][1], points[3][1])
 
